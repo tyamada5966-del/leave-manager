@@ -1,9 +1,11 @@
+<!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>有給休暇管理システム</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.3.0/dist/tabler-icons.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f7f8fa;color:#1a202c;font-size:15px}
@@ -101,6 +103,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .btn-cancel{height:38px;padding:0 18px;background:#fff;border:1px solid #cbd5e0;border-radius:8px;cursor:pointer;font-size:13px;color:#4a5568}
 .empty-state{text-align:center;color:#a0aec0;font-size:13px;padding:2.5rem 0}
 .section-title{font-size:13px;font-weight:600;color:#4a5568;margin-bottom:.875rem;display:flex;align-items:center;gap:6px}
+.loading{text-align:center;color:#718096;padding:2rem;font-size:13px}
 @media(max-width:600px){
   .summary-row{grid-template-columns:repeat(2,1fr)}
   .detail-grid{grid-template-columns:repeat(2,1fr)}
@@ -111,7 +114,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <body>
 <div class="app">
   <div class="top-header">
-    <h1><i class="ti ti-calendar-check" style="font-size:22px;vertical-align:-4px;margin-right:6px;color:#3182ce"></i>有給休暇管理 <span id="year-label">2025年度</span></h1>
+    <h1><i class="ti ti-calendar-check" style="font-size:22px;vertical-align:-4px;margin-right:6px;color:#3182ce"></i>有給休暇管理 <span id="year-label">2026年度</span></h1>
     <button class="add-emp-btn" style="width:auto;padding:6px 16px;border-style:solid;border-color:#cbd5e0;border-radius:8px" onclick="openAddEmp()">＋ 従業員を追加</button>
   </div>
 
@@ -121,7 +124,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <button class="tab-btn" onclick="switchTab('new-request',this)"><i class="ti ti-edit" style="font-size:14px;vertical-align:-2px;margin-right:4px"></i>申請を出す</button>
   </div>
 
-  <!-- 進捗一覧 -->
   <div class="tab-pane active" id="pane-dashboard">
     <div class="summary-row" id="summary"></div>
     <div class="filters">
@@ -131,11 +133,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <button class="filter-btn" onclick="setFilter('duty',this)">義務未達</button>
       <button class="filter-btn" onclick="setFilter('low',this)">残少（3日以下）</button>
     </div>
-    <div id="emp-list"></div>
+    <div id="emp-list"><div class="loading">読み込み中...</div></div>
     <button class="add-emp-btn" onclick="openAddEmp()"><i class="ti ti-plus"></i> 従業員を追加</button>
   </div>
 
-  <!-- 申請管理 -->
   <div class="tab-pane" id="pane-requests">
     <div class="filters">
       <button class="filter-btn active" onclick="setReqFilter('pending',this)">承認待ち</button>
@@ -146,7 +147,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div id="req-list"></div>
   </div>
 
-  <!-- 申請を出す -->
   <div class="tab-pane" id="pane-new-request">
     <div class="new-req-card">
       <div class="section-title"><i class="ti ti-calendar-plus" style="font-size:16px"></i>有給休暇 申請フォーム</div>
@@ -171,7 +171,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
 </div>
 
-<!-- 従業員追加モーダル -->
 <div class="modal-overlay" id="modal-emp" onclick="if(event.target===this)closeModal()">
   <div class="modal">
     <h3><i class="ti ti-user-plus" style="font-size:18px;vertical-align:-3px;margin-right:6px;color:#3182ce"></i>従業員を追加</h3>
@@ -190,27 +189,77 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </div>
 
 <script>
-const YEAR=2025;
+const YEAR=2026;
 const COLORS=[['#ebf8ff','#2c5282'],['#e6fffa','#285e61'],['#fff5f5','#742a2a'],['#faf5ff','#44337a'],['#fffff0','#744210'],['#f0fff4','#22543d'],['#fff5f5','#63171b'],['#e9d8fd','#44337a']];
 
-function loadData(){
-  try{
-    const e=localStorage.getItem('lm_employees');
-    const r=localStorage.getItem('lm_requests');
-    return{
-      employees:e?JSON.parse(e):[],
-      requests:r?JSON.parse(r):[]
-    };
-  }catch(e){return{employees:[],requests:[]};}
-}
+const SUPABASE_URL='https://qlzvfobilpcwhxrnxeat.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFsenZmb2JpbHBjd2h4cm54ZWF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxNDIzMjMsImV4cCI6MjA5MzcxODMyM30.0byN6fXvKc6e4maXx3Q51P_LeyRwFGw9U7H6RXBXedg';
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
-function saveData(){
-  localStorage.setItem('lm_employees',JSON.stringify(state.employees));
-  localStorage.setItem('lm_requests',JSON.stringify(state.requests));
-}
-
-let state=loadData();
+let state={employees:[],requests:[]};
 let selectedId=null,activeFilter='all',activeReqFilter='pending';
+let isLoading=false;
+
+function toEmp(e){
+  return{id:e.id,name:e.name,type:e.type,hire:e.hire,
+    carry:Number(e.carry||0),
+    grantOverride:e.grant_override!=null?Number(e.grant_override):null,
+    att:Number(e.att||90),
+    remainOverride:e.remain_override!=null?Number(e.remain_override):null,
+    records:Array.isArray(e.records)?e.records:[]};
+}
+function toReq(r){
+  return{id:r.id,empId:r.emp_id,empName:r.emp_name,
+    type:r.type,start:r.start_date,end:r.end_date,
+    days:Number(r.days),note:r.note||'',
+    status:r.status,createdAt:(r.created_at||'').split('T')[0]};
+}
+
+async function loadData(){
+  isLoading=true;
+  document.getElementById('emp-list').innerHTML='<div class="loading"><i class="ti ti-loader" style="font-size:20px;display:block;margin:0 auto 8px"></i>データを読み込み中...</div>';
+  try{
+    const [{data:emps},{data:reqs}]=await Promise.all([
+      sb.from('employees').select('*').order('id'),
+      sb.from('requests').select('*').order('id')
+    ]);
+    state.employees=(emps||[]).map(toEmp);
+    state.requests=(reqs||[]).map(toReq);
+  }catch(e){console.error(e);alert('データの読み込みに失敗しました');}
+  isLoading=false;
+  renderAll();
+}
+
+async function dbSaveEmp(e){
+  const row={name:e.name,type:e.type,hire:e.hire,carry:e.carry,
+    grant_override:e.grantOverride,att:e.att,
+    remain_override:e.remainOverride,records:e.records};
+  if(e.id){
+    await sb.from('employees').update(row).eq('id',e.id);
+  }else{
+    const {data}=await sb.from('employees').insert(row).select().single();
+    if(data)e.id=data.id;
+  }
+}
+
+async function dbDeleteEmp(empId){
+  await sb.from('employees').delete().eq('id',empId);
+}
+
+async function dbSaveReq(r){
+  const row={emp_id:r.empId,emp_name:r.empName,type:r.type,
+    start_date:r.start,end_date:r.end,days:r.days,note:r.note,status:r.status};
+  if(r.id){
+    await sb.from('requests').update(row).eq('id',r.id);
+  }else{
+    const {data}=await sb.from('requests').insert(row).select().single();
+    if(data)r.id=data.id;
+  }
+}
+
+async function dbUpdateReqStatus(reqId,status){
+  await sb.from('requests').update({status}).eq('id',reqId);
+}
 
 function monthsDiff(d1,d2){return(d2.getFullYear()-d1.getFullYear())*12+d2.getMonth()-d1.getMonth();}
 function getAutoGrant(type,hire,att){
@@ -330,8 +379,8 @@ function renderDashboard(){
       const pendingReqs=state.requests.filter(r=>r.empId===e.id&&r.status==='pending');
       const allEntries=[
         ...e.records.map(r=>({...r,src:'record'})),
-        ...approvedReqs.map(r=>({date:r.start,days:r.days,type:r.type,src:'approved',reqId:r.id})),
-        ...pendingReqs.map(r=>({date:r.start,days:r.days,type:r.type,src:'pending',reqId:r.id})),
+        ...approvedReqs.map(r=>({date:r.start,days:r.days,type:r.type,src:'approved'})),
+        ...pendingReqs.map(r=>({date:r.start,days:r.days,type:r.type,src:'pending'})),
       ].sort((a,b)=>a.date.localeCompare(b.date));
       const rows=allEntries.length===0
         ?'<tr><td colspan="4" style="text-align:center;color:#a0aec0">記録なし</td></tr>'
@@ -346,12 +395,8 @@ function renderDashboard(){
         <div class="duty-track"><div class="duty-fill" style="width:${Math.min(c.dutyFilled/5*100,100).toFixed(0)}%;background:${c.dutyRemain===0?'#38a169':'#d69e2e'}"></div></div>
       </div>`:'';
       const today=new Date().toISOString().split('T')[0];
-      const typeOpts=e.type==='正社員'
-        ?'<option>通常</option><option>欠勤振替</option><option>計画年休</option>'
-        :'<option>通常</option><option>欠勤振替</option>';
-      const dayOpts=e.type==='正社員'
-        ?'<option value="0.5">0.5日</option><option value="1" selected>1日</option><option value="2">2日</option><option value="3">3日</option><option value="4">4日</option><option value="5">5日</option>'
-        :'<option value="1" selected>1日</option><option value="2">2日</option><option value="3">3日</option><option value="4">4日</option><option value="5">5日</option>';
+      const typeOpts=e.type==='正社員'?'<option>通常</option><option>欠勤振替</option><option>計画年休</option>':'<option>通常</option><option>欠勤振替</option>';
+      const dayOpts=e.type==='正社員'?'<option value="0.5">0.5日</option><option value="1" selected>1日</option><option value="2">2日</option><option value="3">3日</option><option value="4">4日</option><option value="5">5日</option>':'<option value="1" selected>1日</option><option value="2">2日</option><option value="3">3日</option><option value="4">4日</option><option value="5">5日</option>';
       const remainCol=c.remain<=3?'#e53e3e':c.remain<=7?'#d69e2e':'#38a169';
       detail=`<div class="detail-panel">
         <div class="detail-grid">
@@ -434,7 +479,7 @@ function renderRequests(){
   }).join('');
 }
 
-function handleReq(reqId,newStatus){
+async function handleReq(reqId,newStatus){
   const r=state.requests.find(x=>x.id===reqId);
   if(!r)return;
   if(newStatus==='approved'){
@@ -443,7 +488,7 @@ function handleReq(reqId,newStatus){
     if(c.remain-r.days<0&&!confirm(`残日数が不足します（承認後 ${+(c.remain-r.days).toFixed(1)}日）。それでも承認しますか？`))return;
   }
   r.status=newStatus;
-  saveData();
+  await dbUpdateReqStatus(reqId,newStatus);
   renderAll();
 }
 
@@ -452,44 +497,49 @@ function toggleCard(id){
   renderDashboard();
 }
 
-function addRec(empId){
+async function addRec(empId){
   const e=state.employees.find(x=>x.id===empId);
   const d=document.getElementById(`rd-${empId}`).value;
   const days=parseFloat(document.getElementById(`rdays-${empId}`).value);
   const type=document.getElementById(`rtype-${empId}`).value;
   if(!d){alert('取得日を入力してください');return;}
   e.records.push({date:d,days,type});
-  saveData();selectedId=empId;renderAll();
+  await dbSaveEmp(e);
+  selectedId=empId;renderAll();
 }
 
-function delRec(empId,ri){
+async function delRec(empId,ri){
   const e=state.employees.find(x=>x.id===empId);
   const sorted=[...e.records].sort((a,b)=>a.date.localeCompare(b.date));
   const target=sorted[ri];
   const idx=e.records.indexOf(target);
   if(idx!==-1)e.records.splice(idx,1);
-  saveData();selectedId=empId;renderAll();
+  await dbSaveEmp(e);
+  selectedId=empId;renderAll();
 }
 
-function setRemain(empId){
+async function setRemain(empId){
   const e=state.employees.find(x=>x.id===empId);
   const v=document.getElementById(`ro-${empId}`).value;
   e.remainOverride=v!==''?parseFloat(v):null;
-  saveData();selectedId=empId;renderAll();
+  await dbSaveEmp(e);
+  selectedId=empId;renderAll();
 }
-function clearRemain(empId){
+async function clearRemain(empId){
   const e=state.employees.find(x=>x.id===empId);
   e.remainOverride=null;
-  saveData();selectedId=empId;renderAll();
+  await dbSaveEmp(e);
+  selectedId=empId;renderAll();
 }
 
-function deleteEmp(empId){
+async function deleteEmp(empId){
   const e=state.employees.find(x=>x.id===empId);
   if(!confirm(`「${e.name}」を削除しますか？\n取得記録・申請データもすべて削除されます。`))return;
+  await dbDeleteEmp(empId);
   state.employees=state.employees.filter(x=>x.id!==empId);
   state.requests=state.requests.filter(x=>x.empId!==empId);
   selectedId=null;
-  saveData();renderAll();
+  renderAll();
 }
 
 function populateEmpSelect(){
@@ -509,7 +559,7 @@ function updateHint(){
   hint.innerHTML=`現在の有休残：<strong>${c.remain}日</strong>（利用可能 ${c.total}日 ／ 取得済 ${c.used}日）`;
 }
 
-function submitRequest(){
+async function submitRequest(){
   const empId=parseInt(document.getElementById('nq-emp').value);
   const type=document.getElementById('nq-type').value;
   const start=document.getElementById('nq-start').value;
@@ -518,13 +568,14 @@ function submitRequest(){
   const note=document.getElementById('nq-note').value;
   if(!start){alert('取得日を入力してください');return;}
   const emp=state.employees.find(e=>e.id===empId);
-  const newId=Math.max(...state.requests.map(r=>r.id),100)+1;
-  state.requests.push({id:newId,empId,empName:emp.name,type,start,end,days,note,status:'pending',createdAt:new Date().toISOString().split('T')[0]});
+  const newReq={id:null,empId,empName:emp.name,type,start,end,days,note,status:'pending',createdAt:new Date().toISOString().split('T')[0]};
+  await dbSaveReq(newReq);
+  state.requests.push(newReq);
   document.getElementById('nq-start').value='';
   document.getElementById('nq-end').value='';
   document.getElementById('nq-days').value='1';
   document.getElementById('nq-note').value='';
-  saveData();renderAll();renderMyReqs();
+  renderAll();renderMyReqs();
   alert(`${emp.name}さんの申請を提出しました。申請管理タブから承認してください。`);
 }
 
@@ -546,7 +597,7 @@ function renderMyReqs(){
 
 function openAddEmp(){document.getElementById('modal-emp').classList.add('open');}
 function closeModal(){document.getElementById('modal-emp').classList.remove('open');}
-function saveEmp(){
+async function saveEmp(){
   const name=document.getElementById('m-name').value.trim();
   const type=document.getElementById('m-type').value;
   const hire=document.getElementById('m-hire').value;
@@ -555,21 +606,25 @@ function saveEmp(){
   const remainVal=document.getElementById('m-remain').value;
   const att=parseFloat(document.getElementById('m-att').value)||90;
   if(!name||!hire){alert('氏名と入社日は必須です');return;}
-  const newId=Math.max(...state.employees.map(e=>e.id),0)+1;
-  state.employees.push({id:newId,name,type,hire,carry,grantOverride:grantVal!==''?parseFloat(grantVal):null,att,remainOverride:remainVal!==''?parseFloat(remainVal):null,records:[]});
+  const newEmp={id:null,name,type,hire,carry,
+    grantOverride:grantVal!==''?parseFloat(grantVal):null,
+    att,remainOverride:remainVal!==''?parseFloat(remainVal):null,records:[]};
+  await dbSaveEmp(newEmp);
+  state.employees.push(newEmp);
   closeModal();
   document.getElementById('m-name').value='';
   document.getElementById('m-hire').value='';
   document.getElementById('m-carry').value='0';
   document.getElementById('m-grant').value='';
   document.getElementById('m-remain').value='';
-  saveData();selectedId=newId;renderAll();
+  selectedId=newEmp.id;
+  renderAll();
 }
 
 const today=new Date().toISOString().split('T')[0];
 document.getElementById('nq-start').value=today;
 document.getElementById('nq-end').value=today;
-renderAll();
+loadData();
 </script>
 </body>
 </html>
