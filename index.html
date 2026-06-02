@@ -1,3 +1,5 @@
+
+<!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
@@ -176,6 +178,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <label>氏名 <span style="color:#e53e3e">*</span></label><input type="text" id="m-name" placeholder="山田 太郎">
     <label>雇用区分</label><select id="m-type"><option value="正社員">正社員</option><option value="契約社員">契約社員</option></select>
     <label>入社日 <span style="color:#e53e3e">*</span></label><input type="date" id="m-hire">
+    <label>週勤務日数</label><select id="m-weekdays"><option value="5">週5日（フルタイム）</option><option value="4">週4日</option><option value="3">週3日</option><option value="2">週2日</option><option value="1">週1日</option></select>
     <label>出勤率（%）</label><input type="number" id="m-att" value="90" min="0" max="100">
     <label>前年繰越日数</label><input type="number" id="m-carry" value="0" min="0" step="0.5">
     <label>当年付与日数（空白=自動計算）</label><input type="number" id="m-grant" placeholder="自動">
@@ -205,6 +208,7 @@ function toEmp(e){
     grantOverride:e.grant_override!=null?Number(e.grant_override):null,
     att:Number(e.att||90),
     remainOverride:e.remain_override!=null?Number(e.remain_override):null,
+    weekDays:e.week_days!=null?Number(e.week_days):5,
     records:Array.isArray(e.records)?e.records:[]};
 }
 function toReq(r){
@@ -232,7 +236,7 @@ async function loadData(){
 async function dbSaveEmp(e){
   const row={name:e.name,type:e.type,hire:e.hire,carry:e.carry,
     grant_override:e.grantOverride,att:e.att,
-    remain_override:e.remainOverride,records:e.records};
+    remain_override:e.remainOverride,week_days:e.weekDays||5,records:e.records};
   if(e.id){
     await sb.from('employees').update(row).eq('id',e.id);
   }else{
@@ -261,28 +265,42 @@ async function dbUpdateReqStatus(reqId,status){
 }
 
 function monthsDiff(d1,d2){return(d2.getFullYear()-d1.getFullYear())*12+d2.getMonth()-d1.getMonth();}
-function getAutoGrant(type,hire,att){
+// 比例付与テーブル（週勤務日数別）
+const GRANT_TABLE={
+  5:[10,11,12,14,16,18,20], // 週5日（正社員・契約社員）
+  4:[7,8,9,10,12,13,15],   // 週4日
+  3:[5,6,6,8,9,10,11],     // 週3日
+  2:[3,4,4,5,6,6,7],       // 週2日
+  1:[1,2,2,2,3,3,3],       // 週1日
+};
+// インデックス: 0=初回6か月, 1=1年6か月, 2=2年6か月, 3=3年6か月, 4=4年6か月, 5=5年6か月, 6=6年6か月以上
+
+function getAutoGrant(type,hire,att,weekDays){
   if(att<80)return 0;
+  const wd=weekDays||5;
+  const table=GRANT_TABLE[wd]||GRANT_TABLE[5];
   const hd=new Date(hire),jan1=new Date(YEAR,0,1),h6m=new Date(hd);
   h6m.setMonth(h6m.getMonth()+6);
   if(type==='正社員'){
     const isFirstYear=h6m.getFullYear()===YEAR,base=isFirstYear?h6m:jan1,m=monthsDiff(hd,base);
     if(m<6)return 0;
-    if(isFirstYear)return 10;
+    if(isFirstYear)return table[0]; // 初回10日（週5）or比例
     const nthYear=YEAR-h6m.getFullYear();
-    const grantTable=[0,11,12,14,16,18,20];
-    return grantTable[Math.min(nthYear,6)]||20;
+    return table[Math.min(nthYear,6)]||table[6];
   }else{
     let base=new Date(hd);base.setMonth(base.getMonth()+6);
     while(base.getFullYear()<YEAR)base.setFullYear(base.getFullYear()+1);
     if(base.getFullYear()>YEAR)return 0;
     const m=monthsDiff(hd,base);
-    if(m<6)return 0;if(m<18)return 10;if(m<30)return 11;if(m<42)return 12;if(m<54)return 14;if(m<66)return 16;if(m<78)return 18;return 20;
+    if(m<6)return 0;
+    // 経過月数からインデックスを算出
+    const idx=m<18?0:m<30?1:m<42?2:m<54?3:m<66?4:m<78?5:6;
+    return table[idx];
   }
 }
 
 function calcEmp(e){
-  const grant=e.grantOverride!==null?e.grantOverride:getAutoGrant(e.type,e.hire,e.att);
+  const grant=e.grantOverride!==null?e.grantOverride:getAutoGrant(e.type,e.hire,e.att,e.weekDays);
   const total=e.carry+grant;
   const approvedDays=state.requests.filter(r=>r.empId===e.id&&r.status==='approved').reduce((s,r)=>s+r.days,0);
   const usedRecords=e.records.reduce((s,r)=>s+r.days,0);
@@ -426,6 +444,18 @@ function renderDashboard(){
           <button class="add-rec-btn" onclick="event.stopPropagation();setRemain(${e.id})">設定</button>
           ${e.remainOverride!==null?`<button class="add-rec-btn" style="color:#e53e3e;border-color:#feb2b2" onclick="event.stopPropagation();clearRemain(${e.id})">解除</button>`:''}
         </div>
+        <div class="remain-row">
+          <i class="ti ti-calendar-week" style="font-size:16px;color:#718096"></i>
+          <label>週勤務日数：</label>
+          <select id="wd-${e.id}" onclick="event.stopPropagation()" style="height:32px;font-size:12px;border:1px solid #cbd5e0;border-radius:6px;padding:0 8px;background:#fff">
+            <option value="5" ${e.weekDays===5?'selected':''}>週5日</option>
+            <option value="4" ${e.weekDays===4?'selected':''}>週4日</option>
+            <option value="3" ${e.weekDays===3?'selected':''}>週3日</option>
+            <option value="2" ${e.weekDays===2?'selected':''}>週2日</option>
+            <option value="1" ${e.weekDays===1?'selected':''}>週1日</option>
+          </select>
+          <button class="add-rec-btn" onclick="event.stopPropagation();setWeekDays(${e.id})">変更</button>
+        </div>
         <div style="margin-top:10px;padding-top:10px;border-top:1px solid #e2e8f0;text-align:right">
           <button onclick="event.stopPropagation();deleteEmp(${e.id})" style="background:#fff5f5;color:#9b2335;border:1px solid #feb2b2;border-radius:6px;padding:6px 14px;font-size:12px;cursor:pointer"><i class="ti ti-trash"></i> この従業員を削除</button>
         </div>
@@ -434,7 +464,7 @@ function renderDashboard(){
     return`<div class="emp-card ${isOpen?'selected':''}" onclick="toggleCard(${e.id})">
       <div class="emp-header">
         <div class="avatar" style="background:${bgC};color:${fgC}">${initials(e.name)}</div>
-        <div><div class="emp-name">${e.name}</div><div class="emp-sub">取得 ${c.used}日 / 利用可能 ${c.total}日${c.pendingDays>0?' ／ 申請中 '+c.pendingDays+'日':''}</div></div>
+        <div><div class="emp-name">${e.name}</div><div class="emp-sub">取得 ${c.used}日 / 利用可能 ${c.total}日${c.pendingDays>0?' ／ 申請中 '+c.pendingDays+'日':''} ／ 週${e.weekDays}日</div></div>
         <div class="badges">${badges}</div>
       </div>
       <div>
@@ -534,6 +564,14 @@ async function clearRemain(empId){
   selectedId=empId;renderAll();
 }
 
+async function setWeekDays(empId){
+  const e=state.employees.find(x=>x.id===empId);
+  const v=parseInt(document.getElementById(`wd-${empId}`).value)||5;
+  e.weekDays=v;
+  await dbSaveEmp(e);
+  selectedId=empId;renderAll();
+}
+
 async function deleteEmp(empId){
   const e=state.employees.find(x=>x.id===empId);
   if(!confirm(`「${e.name}」を削除しますか？\n取得記録・申請データもすべて削除されます。`))return;
@@ -607,10 +645,11 @@ async function saveEmp(){
   const grantVal=document.getElementById('m-grant').value;
   const remainVal=document.getElementById('m-remain').value;
   const att=parseFloat(document.getElementById('m-att').value)||90;
+  const weekDays=parseInt(document.getElementById('m-weekdays').value)||5;
   if(!name||!hire){alert('氏名と入社日は必須です');return;}
   const newEmp={id:null,name,type,hire,carry,
     grantOverride:grantVal!==''?parseFloat(grantVal):null,
-    att,remainOverride:remainVal!==''?parseFloat(remainVal):null,records:[]};
+    att,weekDays,remainOverride:remainVal!==''?parseFloat(remainVal):null,records:[]};
   await dbSaveEmp(newEmp);
   state.employees.push(newEmp);
   closeModal();
@@ -619,6 +658,7 @@ async function saveEmp(){
   document.getElementById('m-carry').value='0';
   document.getElementById('m-grant').value='';
   document.getElementById('m-remain').value='';
+  document.getElementById('m-weekdays').value='5';
   selectedId=newEmp.id;
   renderAll();
 }
