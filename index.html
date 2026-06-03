@@ -265,7 +265,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div class="new-req-card">
       <div style="font-weight:600;color:#2d3748;font-size:13px;margin-bottom:8px">⑤ 繰越・取得単位・会社の取得義務</div>
       <ul style="font-size:13px;color:#4a5568;line-height:1.95;margin:0;padding-left:1.2em">
-        <li><b>繰越と失効</b>：使い切れなかった残日数は翌年まで（1年限り）繰越可。前々年分（2年前付与）は失効します。</li>
+        <li><b>繰越と失効</b>：使い切れなかった残日数は翌年まで（1年限り）繰越可。前々年分（2年前付与）は失効します。<br><small style="color:#718096">※ 繰越日数は各従業員カードの「前年繰越」欄に入力します（利用可能日数＝前年繰越＋当年付与）。</small></li>
         <li><b>取得単位</b>：原則1日単位。正社員のみ、本人申出＋会社承認で半日（0.5日）取得が可能です。</li>
         <li><b>会社の5日取得義務</b>：当年の新規付与が<b>10日以上の正社員</b>が対象。1年以内に5日取得が必要で、自分で取得した日数と計画年休が充当されます（進捗一覧の「義務未達」で確認できます）。</li>
       </ul>
@@ -593,6 +593,14 @@ function renderDashboard(){
           <button class="add-rec-btn" onclick="event.stopPropagation();addRec(${e.id})"><i class="ti ti-plus"></i> 直接追加</button>
         </div>
         <div class="remain-row">
+          <i class="ti ti-calendar-plus" style="font-size:16px;color:#718096"></i>
+          <label>前年繰越：</label>
+          <input type="number" id="cy-${e.id}" value="${e.carry}" min="0" step="0.5" onclick="event.stopPropagation()">
+          <span style="font-size:12px;color:#718096">日</span>
+          <button class="add-rec-btn" onclick="event.stopPropagation();setCarry(${e.id})">設定</button>
+          <span style="font-size:11px;color:#a0aec0;margin-left:6px">前年から繰り越す残日数。利用可能＝繰越＋当年付与</span>
+        </div>
+        <div class="remain-row">
           <i class="ti ti-pencil" style="font-size:16px;color:#718096"></i>
           <label>有休残を直接入力：</label>
           <input type="number" id="ro-${e.id}" value="${e.remainOverride!==null?e.remainOverride:''}" placeholder="例: 12" min="0" step="0.5" onclick="event.stopPropagation()">
@@ -716,6 +724,14 @@ async function setRemain(empId){
 async function clearRemain(empId){
   const e=state.employees.find(x=>x.id===empId);
   e.remainOverride=null;
+  await dbSaveEmp(e);
+  selectedId=empId;renderAll();
+}
+
+async function setCarry(empId){
+  const e=state.employees.find(x=>x.id===empId);
+  const v=document.getElementById(`cy-${empId}`).value;
+  e.carry=v!==''?parseFloat(v):0;
   await dbSaveEmp(e);
   selectedId=empId;renderAll();
 }
