@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -123,6 +124,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <button class="tab-btn active" onclick="switchTab('dashboard',this)"><i class="ti ti-layout-dashboard" style="font-size:14px;vertical-align:-2px;margin-right:4px"></i>進捗一覧</button>
     <button class="tab-btn" onclick="switchTab('requests',this)" id="tab-req"><i class="ti ti-inbox" style="font-size:14px;vertical-align:-2px;margin-right:4px"></i>申請管理<span class="pending-dot" id="pending-badge" style="display:none">0</span></button>
     <button class="tab-btn" onclick="switchTab('new-request',this)"><i class="ti ti-edit" style="font-size:14px;vertical-align:-2px;margin-right:4px"></i>申請を出す</button>
+    <button class="tab-btn" onclick="switchTab('guide',this)"><i class="ti ti-help-circle" style="font-size:14px;vertical-align:-2px;margin-right:4px"></i>制度の説明</button>
   </div>
 
   <div class="tab-pane active" id="pane-dashboard">
@@ -170,6 +172,144 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div class="section-title" style="margin-top:.5rem"><i class="ti ti-list" style="font-size:16px"></i>申請履歴</div>
     <div id="my-reqs"></div>
   </div>
+
+  <div class="tab-pane" id="pane-guide">
+    <div class="new-req-card">
+      <div class="section-title"><i class="ti ti-help-circle" style="font-size:16px"></i>有給休暇のしくみ（従業員からのよくある質問）</div>
+      <p style="font-size:13px;color:#4a5568;line-height:1.85;margin:0">
+        「有休のルールはどうなっているの？」「自分の今の日数はどう決まっているの？」と聞かれたときの説明です。<br>
+        <span style="color:#718096">※ 制度の根拠は就業規則および労働基準法第39条です。個別の事情は管理部門にご確認ください。</span>
+      </p>
+    </div>
+
+    <!-- Q1 ルール設計 -->
+    <div class="section-title" style="margin-top:1rem"><i class="ti ti-clipboard-list" style="font-size:16px"></i>Q1．有給の日数ルールはどうなっている？</div>
+
+    <div class="new-req-card">
+      <div style="font-weight:600;color:#2d3748;font-size:13px;margin-bottom:8px">① 付与される条件</div>
+      <p style="font-size:13px;color:#4a5568;line-height:1.85;margin:0 0 4px">
+        次の2つを<b>両方</b>満たした人に、その年の有休が付与されます。
+      </p>
+      <ul style="font-size:13px;color:#4a5568;line-height:1.9;margin:4px 0 0;padding-left:1.2em">
+        <li>勤続<b>6か月以上</b></li>
+        <li>所定労働日の<b>出勤率80%以上</b>（80%未満の場合、その年は付与されません）</li>
+      </ul>
+      <div class="nq-hint" style="margin-top:10px">
+        出勤率の計算では、業務上の傷病休業・育児/介護休業・産前産後休暇・年次有給・特別休暇の期間は「出勤したもの」として扱います。
+      </div>
+    </div>
+
+    <div class="new-req-card">
+      <div style="font-weight:600;color:#2d3748;font-size:13px;margin-bottom:8px">② いつ付与されるか（付与基準日）</div>
+      <ul style="font-size:13px;color:#4a5568;line-height:1.9;margin:0;padding-left:1.2em">
+        <li><b>正社員</b>：入社初年度のみ「入社日から6か月後」に初回付与。2年目以降は<b>毎年1月1日</b>にまとめて付与。</li>
+        <li><b>契約社員</b>：入社日から6か月後が起点。以降は<b>入社日を基準にした応当日</b>（毎年同じ月日）で付与。</li>
+      </ul>
+    </div>
+
+    <div class="new-req-card">
+      <div style="font-weight:600;color:#2d3748;font-size:13px;margin-bottom:6px">③ 付与日数（週5日＝フルタイムの場合）</div>
+      <p style="font-size:12px;color:#718096;line-height:1.7;margin:0 0 12px">
+        付与される日数の刻みは正社員・契約社員で同じですが、<b>段階を数える基準（計算式）が異なります</b>。下の2表は基準が別物なので分けて記載しています。
+      </p>
+
+      <div style="font-weight:600;color:#2c5282;font-size:12px;margin:4px 0 6px"><i class="ti ti-calendar" style="font-size:13px;vertical-align:-2px;margin-right:3px"></i>正社員：1月1日基準（暦年で段階を判定）</div>
+      <table class="mini-table">
+        <tr><th>判定タイミング</th><th style="text-align:right">付与日数</th></tr>
+        <tr><td>入社6か月後（初回・入社日基準）</td><td style="text-align:right">10日</td></tr>
+        <tr><td>翌年1月1日（勤続1年未満）</td><td style="text-align:right">11日</td></tr>
+        <tr><td>さらに翌1月1日</td><td style="text-align:right">12日</td></tr>
+        <tr><td>以降 1月1日ごとに</td><td style="text-align:right">14 → 16 → 18日</td></tr>
+        <tr><td>6回目以降の1月1日〜</td><td style="text-align:right"><b>20日</b></td></tr>
+      </table>
+      <p style="font-size:12px;color:#718096;line-height:1.7;margin:6px 0 0">
+        初回だけ入社日基準で付与し、<b>2年目以降は毎年1月1日にまとめて</b>1段階ずつ上がります（「1月1日を何回またいだか」で判定）。
+      </p>
+
+      <div style="font-weight:600;color:#276749;font-size:12px;margin:16px 0 6px"><i class="ti ti-user-clock" style="font-size:13px;vertical-align:-2px;margin-right:3px"></i>契約社員：入社日基準（入社からの経過月数で判定）</div>
+      <table class="mini-table">
+        <tr><th>入社からの経過</th><th style="text-align:right">付与日数</th></tr>
+        <tr><td>6か月（初回）</td><td style="text-align:right">10日</td></tr>
+        <tr><td>1年6か月</td><td style="text-align:right">11日</td></tr>
+        <tr><td>2年6か月</td><td style="text-align:right">12日</td></tr>
+        <tr><td>3年6か月</td><td style="text-align:right">14日</td></tr>
+        <tr><td>4年6か月</td><td style="text-align:right">16日</td></tr>
+        <tr><td>5年6か月</td><td style="text-align:right">18日</td></tr>
+        <tr><td>6年6か月以上</td><td style="text-align:right"><b>20日</b></td></tr>
+      </table>
+      <p style="font-size:12px;color:#718096;line-height:1.7;margin:6px 0 0">
+        1月1日とは無関係に、<b>入社日を起点とした応当日</b>（入社からの累計月数）で1段階ずつ上がります。
+      </p>
+
+      <div class="nq-hint" style="margin-top:12px">
+        <b>例：</b>2024年4月入社と2024年11月入社の正社員は、2026年1月1日時点で同じ段階に揃います（暦年で数えるため）。一方、契約社員はそれぞれの入社応当日のタイミングでバラバラに昇段します。
+      </div>
+    </div>
+
+    <div class="new-req-card">
+      <div style="font-weight:600;color:#2d3748;font-size:13px;margin-bottom:10px">④ 週の勤務日数が少ない人の比例付与</div>
+      <p style="font-size:13px;color:#4a5568;line-height:1.8;margin:0 0 8px">
+        週の所定労働日数が4日以下の人は、日数に応じて比例付与になります。
+      </p>
+      <table class="mini-table">
+        <tr><th>週勤務</th><th style="text-align:right">初回</th><th style="text-align:right">1.5年</th><th style="text-align:right">2.5年</th><th style="text-align:right">3.5年</th><th style="text-align:right">4.5年</th><th style="text-align:right">5.5年</th><th style="text-align:right">6.5年〜</th></tr>
+        <tr><td>週5日</td><td style="text-align:right">10</td><td style="text-align:right">11</td><td style="text-align:right">12</td><td style="text-align:right">14</td><td style="text-align:right">16</td><td style="text-align:right">18</td><td style="text-align:right">20</td></tr>
+        <tr><td>週4日</td><td style="text-align:right">7</td><td style="text-align:right">8</td><td style="text-align:right">9</td><td style="text-align:right">10</td><td style="text-align:right">12</td><td style="text-align:right">13</td><td style="text-align:right">15</td></tr>
+        <tr><td>週3日</td><td style="text-align:right">5</td><td style="text-align:right">6</td><td style="text-align:right">6</td><td style="text-align:right">8</td><td style="text-align:right">9</td><td style="text-align:right">10</td><td style="text-align:right">11</td></tr>
+        <tr><td>週2日</td><td style="text-align:right">3</td><td style="text-align:right">4</td><td style="text-align:right">4</td><td style="text-align:right">5</td><td style="text-align:right">6</td><td style="text-align:right">6</td><td style="text-align:right">7</td></tr>
+        <tr><td>週1日</td><td style="text-align:right">1</td><td style="text-align:right">2</td><td style="text-align:right">2</td><td style="text-align:right">2</td><td style="text-align:right">3</td><td style="text-align:right">3</td><td style="text-align:right">3</td></tr>
+      </table>
+      <p style="font-size:12px;color:#718096;line-height:1.7;margin:8px 0 0">単位：日。本システムは週勤務日数の設定に応じてこの表から自動で日数を決定します。</p>
+    </div>
+
+    <div class="new-req-card">
+      <div style="font-weight:600;color:#2d3748;font-size:13px;margin-bottom:8px">⑤ 繰越・取得単位・会社の取得義務</div>
+      <ul style="font-size:13px;color:#4a5568;line-height:1.95;margin:0;padding-left:1.2em">
+        <li><b>繰越と失効</b>：使い切れなかった残日数は翌年まで（1年限り）繰越可。前々年分（2年前付与）は失効します。</li>
+        <li><b>取得単位</b>：原則1日単位。正社員のみ、本人申出＋会社承認で半日（0.5日）取得が可能です。</li>
+        <li><b>会社の5日取得義務</b>：当年の新規付与が<b>10日以上の正社員</b>が対象。1年以内に5日取得が必要で、自分で取得した日数と計画年休が充当されます（進捗一覧の「義務未達」で確認できます）。</li>
+      </ul>
+    </div>
+
+    <!-- Q2 算出方法 -->
+    <div class="section-title" style="margin-top:1.25rem"><i class="ti ti-calculator" style="font-size:16px"></i>Q2．今の自分の日数はどう算出されている？（2026年版）</div>
+
+    <div class="new-req-card">
+      <div style="font-weight:600;color:#2d3748;font-size:13px;margin-bottom:8px">基本の計算式</div>
+      <div style="background:#ebf8ff;border-radius:8px;padding:12px 14px;font-size:13px;color:#2c5282;font-weight:600;line-height:1.7;text-align:center">
+        残日数 ＝ 前年繰越 ＋ 当年付与 − 取得済（承認された分）
+      </div>
+      <p style="font-size:12px;color:#718096;line-height:1.7;margin:10px 0 0">
+        「利用可能日数」は <b>前年繰越 ＋ 当年付与</b>、そこから承認済みの取得を引いたものが「残日数」です。申請中（未承認）の日数は残日数からはまだ引かれません。
+      </p>
+    </div>
+
+    <div class="new-req-card">
+      <div style="font-weight:600;color:#2d3748;font-size:13px;margin-bottom:10px">「当年付与」が決まるまでの4ステップ</div>
+      <ol style="font-size:13px;color:#4a5568;line-height:1.95;margin:0;padding-left:1.3em">
+        <li><b>出勤率を確認</b>：80%未満ならその年の付与は0日。</li>
+        <li><b>勤続区分を判定</b>：雇用区分で<b>数え方が変わります</b>。<br>
+          ・正社員＝<b>2026年1月1日時点</b>で、入社6か月後を起点に「1月1日を何回またいだか」（暦年ベース）で段階を判定。<br>
+          ・契約社員＝<b>入社日からの累計経過月数</b>（6か月→10日、1年6か月→11日…6年6か月以上→20日）で段階を判定。</li>
+        <li><b>週勤務日数で日数を決定</b>：上の比例付与表から該当日数を取得。</li>
+        <li><b>繰越を足して取得済を引く</b>：前年繰越を加算し、承認済みの取得日数を差し引いて残日数を算出。</li>
+      </ol>
+    </div>
+
+    <div class="new-req-card">
+      <div style="font-weight:600;color:#2d3748;font-size:13px;margin-bottom:8px"><i class="ti ti-user-search" style="font-size:15px;vertical-align:-2px;margin-right:4px;color:#3182ce"></i>個別の計算内訳を見る</div>
+      <p style="font-size:12px;color:#718096;line-height:1.7;margin:0 0 8px">従業員を選ぶと、その人の実際のデータに基づく算出過程を表示します（進捗一覧と同じ計算）。</p>
+      <select id="guide-emp" onchange="renderGuideBreakdown()" style="width:100%;height:38px;font-size:13px;border:1px solid #cbd5e0;border-radius:8px;padding:0 10px;background:#fff"></select>
+      <div id="guide-breakdown" style="margin-top:12px"></div>
+    </div>
+
+    <div class="new-req-card">
+      <div style="font-weight:600;color:#2d3748;font-size:13px;margin-bottom:8px">補足：手動で上書きされているケース</div>
+      <p style="font-size:13px;color:#4a5568;line-height:1.85;margin:0">
+        従業員ごとに <span class="badge badge-info">残数直接入力</span> または当年付与の手動指定が設定されている場合は、上記の自動計算より<b>そちらの値が優先</b>されます（中途入社で前任システムから残数を引き継いだ場合など）。表示が想定と違うときは、その人の設定欄をご確認ください。
+      </p>
+    </div>
+  </div>
 </div>
 
 <div class="modal-overlay" id="modal-emp" onclick="if(event.target===this)closeModal()">
@@ -183,6 +323,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <label>前年繰越日数</label><input type="number" id="m-carry" value="0" min="0" step="0.5">
     <label>当年付与日数（空白=自動計算）</label><input type="number" id="m-grant" placeholder="自動">
     <label>有休残日数を直接入力（空白=自動計算）</label><input type="number" id="m-remain" placeholder="例: 12">
+    <label>産休・育休 開始日（任意）</label><input type="date" id="m-leave-start">
+    <label>産休・育休 復帰予定日（任意・未定なら空白）</label><input type="date" id="m-leave-end">
     <div class="modal-btns">
       <button class="btn-cancel" onclick="closeModal()">キャンセル</button>
       <button class="btn-primary" onclick="saveEmp()">追加する</button>
@@ -209,6 +351,8 @@ function toEmp(e){
     att:Number(e.att||90),
     remainOverride:e.remain_override!=null?Number(e.remain_override):null,
     weekDays:e.week_days!=null?Number(e.week_days):5,
+    leaveStart:e.leave_start||null,
+    leaveEnd:e.leave_end||null,
     records:Array.isArray(e.records)?e.records:[]};
 }
 function toReq(r){
@@ -236,7 +380,8 @@ async function loadData(){
 async function dbSaveEmp(e){
   const row={name:e.name,type:e.type,hire:e.hire,carry:e.carry,
     grant_override:e.grantOverride,att:e.att,
-    remain_override:e.remainOverride,week_days:e.weekDays||5,records:e.records};
+    remain_override:e.remainOverride,week_days:e.weekDays||5,
+    leave_start:e.leaveStart||null,leave_end:e.leaveEnd||null,records:e.records};
   if(e.id){
     await sb.from('employees').update(row).eq('id',e.id);
   }else{
@@ -299,6 +444,14 @@ function getAutoGrant(type,hire,att,weekDays){
   }
 }
 
+function isOnLeave(e){
+  if(!e.leaveStart)return false;
+  const ys=new Date(YEAR,0,1),ye=new Date(YEAR,11,31);
+  const ls=new Date(e.leaveStart);
+  const le=e.leaveEnd?new Date(e.leaveEnd):new Date(2999,11,31);
+  return ls<=ye&&le>=ys; // 当年度（YEAR）と休業期間が重なるか
+}
+
 function calcEmp(e){
   const grant=e.grantOverride!==null?e.grantOverride:getAutoGrant(e.type,e.hire,e.att,e.weekDays);
   const total=e.carry+grant;
@@ -307,13 +460,14 @@ function calcEmp(e){
   const used=usedRecords+approvedDays;
   const pendingDays=state.requests.filter(r=>r.empId===e.id&&r.status==='pending').reduce((s,r)=>s+r.days,0);
   const remain=e.remainOverride!==null?e.remainOverride-approvedDays:total-used;
-  const dutyTarget=e.type==='正社員'&&grant>=10;
+  const onLeave=isOnLeave(e);
+  const dutyTarget=e.type==='正社員'&&grant>=10&&!onLeave;
   const selfUsed=e.records.filter(r=>r.type!=='計画年休').reduce((s,r)=>s+r.days,0)+state.requests.filter(r=>r.empId===e.id&&r.status==='approved'&&r.type!=='計画年休').reduce((s,r)=>s+r.days,0);
   const planUsed=e.records.filter(r=>r.type==='計画年休').reduce((s,r)=>s+r.days,0)+state.requests.filter(r=>r.empId===e.id&&r.status==='approved'&&r.type==='計画年休').reduce((s,r)=>s+r.days,0);
   const dutyFilled=Math.min(selfUsed+planUsed,5);
   const dutyRemain=dutyTarget?Math.max(5-dutyFilled,0):0;
   const pct=total>0?Math.min(used/total*100,100):0;
-  return{grant,total,used,remain,pendingDays,dutyTarget,dutyRemain,dutyFilled,pct};
+  return{grant,total,used,remain,pendingDays,dutyTarget,dutyRemain,dutyFilled,pct,onLeave};
 }
 
 function initials(n){return n.replace(/\s/g,'').slice(0,2);}
@@ -324,6 +478,7 @@ function switchTab(tab,btn){
   btn.classList.add('active');
   document.getElementById('pane-'+tab).classList.add('active');
   if(tab==='new-request'){populateEmpSelect();renderMyReqs();}
+  if(tab==='guide'){populateGuideSelect();renderGuideBreakdown();}
 }
 
 function setFilter(f,btn){
@@ -388,6 +543,7 @@ function renderDashboard(){
     const pendingPct=c.total>0?Math.min(c.pendingDays/c.total*100,100).toFixed(1):0;
     const barColor=c.remain<=3?'#e53e3e':c.remain<=7?'#d69e2e':'#38a169';
     let badges=`<span class="badge badge-neutral">${e.type}</span>`;
+    if(c.onLeave)badges+=`<span class="badge badge-info">産休・育休中</span>`;
     if(c.pendingDays>0)badges+=`<span class="badge badge-pending">申請中 ${c.pendingDays}日</span>`;
     if(c.dutyTarget&&c.dutyRemain===0)badges+=`<span class="badge badge-success">義務達成</span>`;
     if(c.dutyTarget&&c.dutyRemain>0)badges+=`<span class="badge badge-danger">義務未達</span>`;
@@ -588,6 +744,54 @@ function populateEmpSelect(){
   updateHint();
 }
 
+function populateGuideSelect(){
+  const sel=document.getElementById('guide-emp');
+  if(!sel)return;
+  const cur=sel.value;
+  sel.innerHTML='<option value="">― 従業員を選択 ―</option>'+state.employees.map(e=>`<option value="${e.id}">${e.name}（${e.type}）</option>`).join('');
+  if(cur)sel.value=cur;
+}
+
+function renderGuideBreakdown(){
+  const box=document.getElementById('guide-breakdown');
+  if(!box)return;
+  const sel=document.getElementById('guide-emp');
+  const e=state.employees.find(x=>x.id===parseInt(sel.value));
+  if(!e){box.innerHTML='<p style="font-size:12px;color:#a0aec0;margin:4px 0 0">上のリストから従業員を選ぶと、その人の算出過程が表示されます。</p>';return;}
+  const c=calcEmp(e);
+  const auto=getAutoGrant(e.type,e.hire,e.att,e.weekDays);
+  const basis=e.type==='正社員'?'2026年1月1日基準（暦年で段階を判定）':'入社日基準（入社からの経過月数で判定）';
+  const attOk=e.att>=80;
+  const grantOv=e.grantOverride!==null,remainOv=e.remainOverride!==null;
+  let rows='';
+  const r=(k,v)=>{rows+=`<tr><td>${k}</td><td style="text-align:right">${v}</td></tr>`;};
+  r('雇用区分',e.type+(c.onLeave?' <span class="badge badge-info">産休・育休中</span>':''));
+  r('入社日',(e.hire||'-').replace(/-/g,'/'));
+  r('週勤務日数','週'+e.weekDays+'日');
+  r('出勤率',e.att+'%'+(attOk?'（80%以上 → 付与あり）':' <span style="color:#e53e3e">（80%未満 → 付与0日）</span>'));
+  r('算定基準',basis);
+  r('当年付与（自動計算）',auto+'日'+(grantOv?`<br><small style="color:#718096">→ 手動指定 ${e.grantOverride}日を優先</small>`:''));
+  r('前年繰越',e.carry+'日');
+  r('<b>利用可能（繰越＋当年）</b>','<b>'+c.total+'日</b>');
+  r('取得済（承認分）',c.used+'日'+(c.pendingDays>0?`<br><small style="color:#744210">申請中 ${c.pendingDays}日（未承認・残数からは未控除）</small>`:''));
+  r('<b>残日数</b>',`<b style="color:${c.remain<=3?'#e53e3e':c.remain<=7?'#d69e2e':'#276749'}">${c.remain}日</b>`+(remainOv?'<br><small style="color:#718096">残数直接入力を優先</small>':''));
+  if(c.dutyTarget)r('5日取得義務',`充当 ${c.dutyFilled}/5日（残り ${c.dutyRemain}日）`);
+  else if(e.type==='正社員'&&c.grant>=10&&c.onLeave)r('5日取得義務','産休・育休中のため対象外（要確認）');
+  else r('5日取得義務','対象外');
+  let note='';
+  if(c.onLeave){
+    note=`<div class="nq-hint" style="margin-top:10px"><b>産休・育休中の扱い</b><br>
+      産前産後休暇・育児休業の期間は、出勤率（8割判定）の算定上「出勤したもの」とみなされます（労基法39条10項）。そのため<b>当年付与は減らず満額</b>です。未消化分は翌年へ繰り越されます。<br>
+      休業期間：${(e.leaveStart||'').replace(/-/g,'/')} 〜 ${e.leaveEnd?e.leaveEnd.replace(/-/g,'/'):'未定'}<br>
+      5日取得義務は就労できる期間が限られるため対象外としています。比例・免除の最終的な扱いは社労士にご確認ください。</div>`;
+  }else if(!attOk){
+    note=`<div class="nq-hint danger" style="margin-top:10px">出勤率が80%未満のため、この年の付与は0日です。産休・育休などの保護期間が出勤扱いになっているかご確認ください。</div>`;
+  }else if(grantOv||remainOv){
+    note=`<div class="nq-hint" style="margin-top:10px">${grantOv?'当年付与の手動指定':''}${grantOv&&remainOv?'・':''}${remainOv?'残数直接入力':''}が設定されており、自動計算より優先されています。</div>`;
+  }
+  box.innerHTML=`<table class="mini-table"><tr><th>項目</th><th style="text-align:right">値</th></tr>${rows}</table>${note}`;
+}
+
 function updateHint(){
   const empId=parseInt(document.getElementById('nq-emp').value);
   const emp=state.employees.find(e=>e.id===empId);
@@ -646,10 +850,13 @@ async function saveEmp(){
   const remainVal=document.getElementById('m-remain').value;
   const att=parseFloat(document.getElementById('m-att').value)||90;
   const weekDays=parseInt(document.getElementById('m-weekdays').value)||5;
+  const leaveStart=document.getElementById('m-leave-start').value||null;
+  const leaveEnd=document.getElementById('m-leave-end').value||null;
   if(!name||!hire){alert('氏名と入社日は必須です');return;}
   const newEmp={id:null,name,type,hire,carry,
     grantOverride:grantVal!==''?parseFloat(grantVal):null,
-    att,weekDays,remainOverride:remainVal!==''?parseFloat(remainVal):null,records:[]};
+    att,weekDays,remainOverride:remainVal!==''?parseFloat(remainVal):null,
+    leaveStart,leaveEnd,records:[]};
   await dbSaveEmp(newEmp);
   state.employees.push(newEmp);
   closeModal();
@@ -659,6 +866,8 @@ async function saveEmp(){
   document.getElementById('m-grant').value='';
   document.getElementById('m-remain').value='';
   document.getElementById('m-weekdays').value='5';
+  document.getElementById('m-leave-start').value='';
+  document.getElementById('m-leave-end').value='';
   selectedId=newEmp.id;
   renderAll();
 }
