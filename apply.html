@@ -1,0 +1,194 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>有給休暇 申請ページ</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.3.0/dist/tabler-icons.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f7f8fa;color:#1a202c;font-size:15px}
+.app{max-width:820px;margin:0 auto;padding:1.5rem 1rem 4rem}
+.top-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:10px}
+.top-header h1{font-size:20px;font-weight:700;color:#1a202c}
+.top-header h1 span{font-size:13px;font-weight:400;color:#718096;margin-left:8px}
+.tab-bar{display:flex;border-bottom:1px solid #e2e8f0;margin-bottom:1.5rem}
+.tab-btn{padding:10px 20px;font-size:13px;font-weight:500;background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;color:#718096;margin-bottom:-1px;position:relative}
+.tab-btn.active{color:#3182ce;border-bottom-color:#3182ce}
+.tab-pane{display:none}
+.tab-pane.active{display:block}
+.pending-dot{display:inline-block;background:#e53e3e;color:#fff;font-size:10px;padding:1px 6px;border-radius:99px;margin-left:5px;font-weight:700}
+.summary-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.5rem}
+.sum-card{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:.875rem 1rem}
+.sum-label{font-size:11px;color:#718096;margin-bottom:4px}
+.sum-val{font-size:22px;font-weight:700;color:#1a202c}
+.sum-val.danger{color:#e53e3e}.sum-val.warn{color:#d69e2e}.sum-val.success{color:#38a169}
+.filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1rem}
+.filter-btn{font-size:12px;padding:5px 13px;border:1px solid #cbd5e0;border-radius:99px;background:#fff;cursor:pointer;color:#4a5568}
+.filter-btn.active{background:#ebf8ff;color:#2b6cb0;border-color:#90cdf4}
+.emp-card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:1.1rem 1.25rem;margin-bottom:10px;cursor:pointer}
+.emp-card:hover{border-color:#90cdf4}
+.emp-card.selected{border-color:#3182ce;border-width:2px}
+.emp-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.avatar{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0}
+.emp-name{font-size:14px;font-weight:700;color:#1a202c}
+.emp-sub{font-size:12px;color:#718096;margin-top:2px}
+.badges{margin-left:auto;display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
+.badge{font-size:11px;padding:2px 9px;border-radius:99px;font-weight:600;white-space:nowrap}
+.badge-neutral{background:#edf2f7;color:#4a5568}
+.badge-success{background:#f0fff4;color:#276749}
+.badge-warn{background:#fffff0;color:#744210}
+.badge-danger{background:#fff5f5;color:#9b2335}
+.badge-info{background:#ebf8ff;color:#2c5282}
+.badge-pending{background:#fffaf0;color:#c05621}
+.progress-labels{display:flex;justify-content:space-between;font-size:11px;color:#718096;margin-bottom:4px}
+.progress-track{height:10px;border-radius:99px;background:#edf2f7;overflow:hidden;position:relative}
+.progress-bar{height:100%;border-radius:99px;position:absolute;top:0;left:0;transition:width .3s}
+.progress-pending{height:100%;position:absolute;top:0;opacity:.35}
+.progress-foot{display:flex;justify-content:space-between;font-size:10px;color:#a0aec0;margin-top:3px}
+.detail-panel{background:#f7fafc;border:1px solid #e2e8f0;border-radius:10px;padding:1rem;margin-top:10px}
+.detail-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+.detail-item{text-align:center;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:.65rem .5rem}
+.detail-num{font-size:18px;font-weight:700;color:#1a202c}
+.detail-lbl{font-size:11px;color:#718096;margin-top:2px}
+.mini-table{width:100%;border-collapse:collapse;font-size:12px}
+.mini-table th{font-size:11px;font-weight:500;color:#718096;text-align:left;padding:5px 6px;border-bottom:1px solid #e2e8f0}
+.mini-table td{padding:6px 6px;border-bottom:1px solid #edf2f7;color:#2d3748;vertical-align:middle}
+.mini-table tr:last-child td{border-bottom:none}
+.add-rec-row{display:flex;gap:6px;align-items:flex-end;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid #e2e8f0}
+.add-rec-row>div{display:flex;flex-direction:column}
+.add-rec-row label{font-size:11px;color:#718096;margin-bottom:3px}
+.add-rec-row input,.add-rec-row select{height:32px;font-size:12px;border:1px solid #cbd5e0;border-radius:6px;padding:0 8px;background:#fff;color:#1a202c}
+.add-rec-btn{height:32px;padding:0 12px;background:#fff;border:1px solid #cbd5e0;border-radius:6px;cursor:pointer;font-size:12px;color:#2d3748;white-space:nowrap}
+.add-rec-btn:hover{background:#edf2f7}
+.remain-row{display:flex;align-items:center;gap:8px;margin-top:8px;padding-top:8px;border-top:1px solid #e2e8f0;flex-wrap:wrap}
+.remain-row label{font-size:12px;color:#718096;white-space:nowrap}
+.remain-row input{width:80px;height:32px;font-size:13px;text-align:center;border:1px solid #cbd5e0;border-radius:6px;padding:0 8px}
+.duty-bar-wrap{margin-bottom:10px}
+.duty-track{height:6px;border-radius:99px;background:#edf2f7;overflow:hidden}
+.duty-fill{height:100%;border-radius:99px}
+.req-card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:1.1rem 1.25rem;margin-bottom:10px}
+.req-header{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px}
+.req-name{font-size:14px;font-weight:700;color:#1a202c}
+.req-meta{font-size:12px;color:#718096;margin-top:3px}
+.req-days-big{font-size:24px;font-weight:700;color:#1a202c;text-align:right}
+.req-days-lbl{font-size:11px;color:#718096;text-align:right}
+.req-actions{display:flex;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid #e2e8f0;align-items:center}
+.req-hint{font-size:12px;color:#718096;flex:1}
+.req-hint.danger{color:#e53e3e}
+.btn-approve{padding:7px 18px;background:#f0fff4;color:#276749;border:1px solid #9ae6b4;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600}
+.btn-reject{padding:7px 18px;background:#fff5f5;color:#9b2335;border:1px solid #feb2b2;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600}
+.status-dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:5px;vertical-align:middle}
+.dot-pending{background:#d69e2e}.dot-approved{background:#38a169}.dot-rejected{background:#e53e3e}
+.new-req-card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:1.25rem;margin-bottom:1rem}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.form-row.single{grid-template-columns:1fr}
+.form-row label{font-size:12px;color:#718096;display:block;margin-bottom:4px}
+.form-row input,.form-row select{width:100%;height:36px;border:1px solid #cbd5e0;border-radius:8px;padding:0 10px;font-size:13px;background:#fff;color:#1a202c}
+.submit-btn{width:100%;height:40px;background:#3182ce;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;margin-top:4px}
+.submit-btn:hover{background:#2c5282}
+.nq-hint{font-size:12px;color:#718096;margin-bottom:8px;padding:8px 12px;background:#ebf8ff;border-radius:6px}
+.nq-hint.danger{background:#fff5f5;color:#9b2335}
+.add-emp-btn{width:100%;padding:12px;border:1.5px dashed #cbd5e0;border-radius:12px;background:none;cursor:pointer;font-size:13px;color:#718096;margin-top:4px}
+.add-emp-btn:hover{background:#f7fafc}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:14px;padding:1.75rem;width:360px;max-width:95vw;box-shadow:0 20px 60px rgba(0,0,0,.15)}
+.modal h3{font-size:16px;font-weight:700;margin-bottom:1rem;color:#1a202c}
+.modal label{font-size:12px;color:#718096;display:block;margin-top:10px;margin-bottom:3px}
+.modal input,.modal select{width:100%;height:36px;border:1px solid #cbd5e0;border-radius:8px;padding:0 10px;font-size:13px;color:#1a202c}
+.modal-btns{display:flex;gap:8px;margin-top:1.25rem}
+.btn-primary{flex:1;height:38px;background:#3182ce;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600}
+.btn-cancel{height:38px;padding:0 18px;background:#fff;border:1px solid #cbd5e0;border-radius:8px;cursor:pointer;font-size:13px;color:#4a5568}
+.empty-state{text-align:center;color:#a0aec0;font-size:13px;padding:2.5rem 0}
+.section-title{font-size:13px;font-weight:600;color:#4a5568;margin-bottom:.875rem;display:flex;align-items:center;gap:6px}
+.loading{text-align:center;color:#718096;padding:2rem;font-size:13px}
+@media(max-width:600px){
+  .summary-row{grid-template-columns:repeat(2,1fr)}
+  .detail-grid{grid-template-columns:repeat(2,1fr)}
+  .form-row{grid-template-columns:1fr}
+}
+</style>
+
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1><i class="ti ti-calendar-plus" style="font-size:22px;vertical-align:-4px;margin-right:6px;color:#3182ce"></i>有給休暇 申請</h1>
+  </div>
+
+  <div class="new-req-card">
+    <div class="section-title"><i class="ti ti-calendar-plus" style="font-size:16px"></i>有給休暇 申請フォーム</div>
+    <div class="form-row">
+      <div><label>申請者</label><select id="nq-emp"></select></div>
+      <div><label>取得区分</label><select id="nq-type"><option value="通常">通常</option><option value="欠勤振替">欠勤振替</option><option value="計画年休">計画年休（正社員のみ）</option></select></div>
+    </div>
+    <div class="form-row">
+      <div><label>取得日（開始）</label><input type="date" id="nq-start"></div>
+      <div><label>取得日（終了）</label><input type="date" id="nq-end"></div>
+    </div>
+    <div class="form-row">
+      <div><label>取得単位</label><select id="nq-unit"><option value="1">1日</option><option value="0.5">半日（0.5日）</option></select></div>
+      <div><label>取得日数</label><input type="number" id="nq-days" value="1" min="0.5" step="0.5"></div>
+    </div>
+    <div class="form-row single"><div><label>申請理由・備考</label><input type="text" id="nq-note" placeholder="例：私用のため"></div></div>
+    <div class="nq-hint" style="display:block">申請後、管理者の承認をもって確定します。申請内容や残日数の確認は管理部門までお問い合わせください。</div>
+    <button class="submit-btn" onclick="submitRequest()"><i class="ti ti-send"></i> 申請する</button>
+  </div>
+
+  <p style="text-align:center;color:#a0aec0;font-size:12px;margin-top:1rem">社員用 申請ページ</p>
+</div>
+
+<script>
+const SUPABASE_URL='https://qlzvfobilpcwhxrnxeat.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFsenZmb2JpbHBjd2h4cm54ZWF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxNDIzMjMsImV4cCI6MjA5MzcxODMyM30.0byN6fXvKc6e4maXx3Q51P_LeyRwFGw9U7H6RXBXedg';
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+let employees=[];
+
+async function loadEmployees(){
+  const sel=document.getElementById('nq-emp');
+  try{
+    const {data}=await sb.from('employees').select('id,name,type').order('id');
+    employees=data||[];
+    sel.innerHTML=employees.map(e=>`<option value="${e.id}">${e.name}（${e.type}）</option>`).join('');
+  }catch(err){
+    console.error(err);
+    sel.innerHTML='<option value="">読み込みに失敗しました</option>';
+  }
+}
+
+async function submitRequest(){
+  const empId=parseInt(document.getElementById('nq-emp').value);
+  const emp=employees.find(e=>e.id===empId);
+  if(!emp){alert('申請者を選択してください');return;}
+  const type=document.getElementById('nq-type').value;
+  const start=document.getElementById('nq-start').value;
+  const end=document.getElementById('nq-end').value||start;
+  const days=parseFloat(document.getElementById('nq-days').value)||1;
+  const note=document.getElementById('nq-note').value;
+  if(!start){alert('取得日を入力してください');return;}
+  const row={emp_id:empId,emp_name:emp.name,type,start_date:start,end_date:end,days,note,status:'pending'};
+  try{
+    const {error}=await sb.from('requests').insert(row);
+    if(error)throw error;
+  }catch(err){
+    console.error(err);
+    alert('申請の送信に失敗しました。時間をおいて再度お試しください。');
+    return;
+  }
+  document.getElementById('nq-start').value='';
+  document.getElementById('nq-end').value='';
+  document.getElementById('nq-days').value='1';
+  document.getElementById('nq-note').value='';
+  alert(`${emp.name}さんの申請を提出しました。管理者の承認をお待ちください。`);
+}
+
+loadEmployees();
+</script>
+</body>
+</html>
